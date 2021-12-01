@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -271,6 +272,11 @@ public class FileHandlerService {
             suffix = WebUtils.suffixFromUrl(url);
         }
         attribute.setType(type);
+        try {
+            fileName = URLDecoder.decode(fileName,"utf-8");
+        } catch (Exception e) {
+            logger.error("文件名转义失败",e);
+        }
         attribute.setName(fileName);
         attribute.setSuffix(suffix);
         url = WebUtils.encodeUrlFileName(url);

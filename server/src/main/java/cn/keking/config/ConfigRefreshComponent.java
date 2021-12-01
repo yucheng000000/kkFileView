@@ -48,6 +48,8 @@ public class ConfigRefreshComponent {
                 String baseUrl;
                 String trustHost;
                 String pdfDownloadDisable;
+                String officeUrl;
+                String mediaUrl;
                 boolean fileUploadDisable;
                 while (true) {
                     FileReader fileReader = new FileReader(configFilePath);
@@ -68,6 +70,9 @@ public class ConfigRefreshComponent {
                     trustHost = properties.getProperty("trust.host", ConfigConstants.DEFAULT_TRUST_HOST);
                     pdfDownloadDisable = properties.getProperty("pdf.download.disable", ConfigConstants.DEFAULT_PDF_DOWNLOAD_DISABLE);
                     fileUploadDisable = Boolean.parseBoolean(properties.getProperty("file.upload.disable", ConfigConstants.DEFAULT_FILE_UPLOAD_DISABLE));
+                    officeUrl = properties.getProperty("office.url", ConfigConstants.DEFAULT_OFFICE_URL);
+                    mediaUrl = properties.getProperty("media.url", ConfigConstants.DEFAULT_MEDIA_URL);
+
                     ConfigConstants.setCacheEnabledValueValue(cacheEnabled);
                     ConfigConstants.setSimTextValue(textArray);
                     ConfigConstants.setMediaValue(mediaArray);
@@ -80,6 +85,9 @@ public class ConfigRefreshComponent {
                     ConfigConstants.setOfficePreviewSwitchDisabledValue(officePreviewSwitchDisabled);
                     ConfigConstants.setPdfDownloadDisableValue(pdfDownloadDisable);
                     ConfigConstants.setFileUploadDisableValue(fileUploadDisable);
+                    ConfigConstants.setOfficeUrlValue(officeUrl);
+                    ConfigConstants.setMediaUrlValue(mediaUrl);
+
                     setWatermarkConfig(properties);
                     bufferedReader.close();
                     fileReader.close();

@@ -46,11 +46,18 @@ public class OfficePluginManager {
     @Value("${office.plugin.task.timeout:5m}")
     private String timeOut;
 
+    @Value("${office.start}")
+    private Boolean officeStart;
+
     /**
      * 启动Office组件进程
      */
     @PostConstruct
     public void startOfficeManager(){
+        if(!officeStart){
+            logger.warn("取消启动office进程");
+            return ;
+        }
         File officeHome = OfficeUtils.getDefaultOfficeHome();
         if (officeHome == null) {
             throw new RuntimeException("找不到office组件，请确认'office.home'配置是否有误");

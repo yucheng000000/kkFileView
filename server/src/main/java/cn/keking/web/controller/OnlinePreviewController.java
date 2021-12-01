@@ -2,13 +2,16 @@ package cn.keking.web.controller;
 
 import cn.keking.config.ConfigConstants;
 import cn.keking.model.FileAttribute;
+import cn.keking.model.FileType;
+import cn.keking.service.FileHandlerService;
 import cn.keking.service.FilePreview;
 import cn.keking.service.FilePreviewFactory;
-
 import cn.keking.service.cache.CacheService;
 import cn.keking.service.impl.OtherFilePreviewImpl;
-import cn.keking.service.FileHandlerService;
+import cn.keking.utils.Md5Util;
 import cn.keking.utils.WebUtils;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import fr.opensagres.xdocreport.core.io.IOUtils;
 import io.mola.galimatias.GalimatiasParseException;
 import jodd.io.NetUtil;
@@ -25,7 +28,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -69,6 +73,22 @@ public class OnlinePreviewController {
             return otherFilePreview.notSupportedFile(model, "该文件不允许预览：" + fileUrl);
         }
         FileAttribute fileAttribute = fileHandlerService.getFileAttribute(fileUrl, req);
+        if(fileAttribute.getType().equals(FileType.OFFICE)){
+            logger.info("预览office文件url：{}，previewType：{}", fileUrl, fileAttribute.getType());
+            req.setAttribute("fileAttribute",fileAttribute);
+            String json = "{\"type\":\"desktop\",\"mode\":\"view\",\"document\":{\"title\":\"\",\"url\":\"\",\"fileType\":\"\",\"key\":\"66751578\",\"info\":{},\"permissions\":{\"comments\":false,\"print\":false,\"download\":false,\"edit\":false,\"fillForms\":false,\"modifyFilter\":false,\"modifyContentControl\":false,\"review\":false}},\"editorConfig\":{\"mode\":\"view\",\"lang\":\"zh\",\"user\":{\"id\":\"uid-1\",\"name\":\"John Smith\"},\"customization\":{\"hideRightMenu\":false,\"about\":false,\"help\":false,\"chat\":false,\"comments\":false,\"plugins\":false,\"toolbarHideFileName\":false,\"forcesave\":false,\"submitForm\":false}}}";
+            JSONObject jsonObject = JSON.parseObject(json, JSONObject.class);
+            JSONObject document = jsonObject.getJSONObject("document");
+            document.put("title",fileAttribute.getName());
+            document.put("url",fileAttribute.getUrl());
+            document.put("fileType",fileAttribute.getSuffix());
+            String key = Md5Util.getMDString(fileAttribute.getUrl()) + fileAttribute.getName();
+            document.put("key", Md5Util.MD5Encode(key,"utf-8", false));
+            model.addAttribute("json",jsonObject.toJSONString());
+            model.addAttribute("officeUrl",ConfigConstants.getOfficeUrl());
+            logger.info("key:{},mdkey:{}",key,document.get("key"));
+            return "office";
+        }
         model.addAttribute("file", fileAttribute);
         FilePreview filePreview = previewFactory.get(fileAttribute);
         logger.info("预览文件url：{}，previewType：{}", fileUrl, fileAttribute.getType());

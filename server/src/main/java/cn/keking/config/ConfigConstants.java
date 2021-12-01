@@ -16,6 +16,7 @@ import java.util.Set;
 @Component
 public class ConfigConstants {
 
+
     static {
         //pdfbox兼容低版本jdk
         System.setProperty("sun.java2d.cmm", "sun.java2d.cmm.kcms.KcmsServiceProvider");
@@ -37,6 +38,8 @@ public class ConfigConstants {
     private static CopyOnWriteArraySet<String> trustHostSet;
     private static String pdfDownloadDisable;
     private static Boolean fileUploadDisable;
+    private static String officeUrl;
+    private static String mediaUrl;
 
     public static final String DEFAULT_CACHE_ENABLED = "true";
     public static final String DEFAULT_TXT_TYPE = "txt,html,htm,asp,jsp,xml,json,properties,md,gitignore,log,java,py,c,cpp,sql,sh,bat,m,bas,prg,cmd";
@@ -52,6 +55,8 @@ public class ConfigConstants {
     public static final String DEFAULT_TRUST_HOST = "default";
     public static final String DEFAULT_PDF_DOWNLOAD_DISABLE = "true";
     public static final String DEFAULT_FILE_UPLOAD_DISABLE = "false";
+    public static final String DEFAULT_OFFICE_URL = "default";
+    public static final String DEFAULT_MEDIA_URL = "default";
 
 
     public static Boolean isCacheEnabled() {
@@ -283,5 +288,30 @@ public class ConfigConstants {
 
     public static void setFileUploadDisableValue(Boolean fileUploadDisable) {
         ConfigConstants.fileUploadDisable = fileUploadDisable;
+    }
+
+    public static String getOfficeUrl() {
+        return officeUrl;
+    }
+
+    @Value("${base.url:default}")
+    public void setOfficeUrl(String officeUrl) {
+        setOfficeUrlValue(officeUrl);
+    }
+
+    public static void setOfficeUrlValue(String officeUrl) {
+        ConfigConstants.officeUrl = officeUrl;
+    }
+
+    public static String getMediaUrl() {
+        return mediaUrl;
+    }
+    @Value("${media.url:default}")
+    public void setMediaUrl(String mediaUrl) {
+        setMediaUrlValue(mediaUrl);
+    }
+
+    public static void setMediaUrlValue(String mediaUrl) {
+        ConfigConstants.mediaUrl = mediaUrl;
     }
 }
