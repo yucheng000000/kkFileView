@@ -60,6 +60,7 @@ public class MediaFilePreviewImpl implements FilePreview {
         }
 
         if(checkNeedConvert(fileAttribute.getSuffix())){
+            model.addAttribute("m3u8Speed", new M3U8Speed());
             url=convertUrl(fileAttribute,model);
             model.addAttribute("mediaUrl", url);
             return MEDIA4M3U8_FILE_PREVIEW_PAGE;
@@ -120,7 +121,6 @@ public class MediaFilePreviewImpl implements FilePreview {
                 logger.info("开始转码：{}",url);
                 new Thread(new ConvertTask(fileAttribute, url, fileHandlerService))
                         .start();
-                model.addAttribute("m3u8Speed", new M3U8Speed());
                 return "0";
             }
             logger.info("获取已转码文件大小");
@@ -207,7 +207,8 @@ public class MediaFilePreviewImpl implements FilePreview {
         UUID uuid = UUID.randomUUID();
         String name = uuid + "." + fileAttribute.getSuffix();
         logger.info("name:{}",name);
-        ReturnResponse<String> stringReturnResponse = DownloadUtils.downLoad(fileAttribute, name);
+        // 下载至media目录
+        ReturnResponse<String> stringReturnResponse = DownloadUtils.downLoad(fileAttribute, name, ConfigConstants.getMediaDir());
         String filePath = stringReturnResponse.getContent();
         logger.info("filePath:{}",filePath);
         String convertFileName=(ConfigConstants.getMediaUrl()+uuid+File.separator+name).replace(fileAttribute.getSuffix(),"m3u8");

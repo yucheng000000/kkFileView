@@ -50,6 +50,7 @@ public class ConfigRefreshComponent {
                 String pdfDownloadDisable;
                 String officeUrl;
                 String mediaUrl;
+                String mediaDir;
                 boolean fileUploadDisable;
                 while (true) {
                     FileReader fileReader = new FileReader(configFilePath);
@@ -72,6 +73,7 @@ public class ConfigRefreshComponent {
                     fileUploadDisable = Boolean.parseBoolean(properties.getProperty("file.upload.disable", ConfigConstants.DEFAULT_FILE_UPLOAD_DISABLE));
                     officeUrl = properties.getProperty("office.url", ConfigConstants.DEFAULT_OFFICE_URL);
                     mediaUrl = properties.getProperty("media.url", ConfigConstants.DEFAULT_MEDIA_URL);
+                    mediaDir = properties.getProperty("media.dir", ConfigConstants.DEFAULT_MEDIA_DIR);
 
                     ConfigConstants.setCacheEnabledValueValue(cacheEnabled);
                     ConfigConstants.setSimTextValue(textArray);
@@ -87,6 +89,7 @@ public class ConfigRefreshComponent {
                     ConfigConstants.setFileUploadDisableValue(fileUploadDisable);
                     ConfigConstants.setOfficeUrlValue(officeUrl);
                     ConfigConstants.setMediaUrlValue(mediaUrl);
+                    ConfigConstants.setMediaDirValue(mediaDir);
 
                     setWatermarkConfig(properties);
                     bufferedReader.close();

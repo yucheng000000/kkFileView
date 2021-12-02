@@ -40,6 +40,7 @@ public class ConfigConstants {
     private static Boolean fileUploadDisable;
     private static String officeUrl;
     private static String mediaUrl;
+    private static String mediaDir;
 
     public static final String DEFAULT_CACHE_ENABLED = "true";
     public static final String DEFAULT_TXT_TYPE = "txt,html,htm,asp,jsp,xml,json,properties,md,gitignore,log,java,py,c,cpp,sql,sh,bat,m,bas,prg,cmd";
@@ -57,6 +58,7 @@ public class ConfigConstants {
     public static final String DEFAULT_FILE_UPLOAD_DISABLE = "false";
     public static final String DEFAULT_OFFICE_URL = "default";
     public static final String DEFAULT_MEDIA_URL = "default";
+    public static final String DEFAULT_MEDIA_DIR = "default";
 
 
     public static Boolean isCacheEnabled() {
@@ -313,5 +315,17 @@ public class ConfigConstants {
 
     public static void setMediaUrlValue(String mediaUrl) {
         ConfigConstants.mediaUrl = mediaUrl;
+    }
+
+    public static String getMediaDir() {
+        return mediaDir;
+    }
+    @Value("${media.dir:default}")
+    public void setMediaDir(String mediaDir) {
+        setMediaDirValue(mediaDir);
+    }
+
+    public static void setMediaDirValue(String mediaDir) {
+        ConfigConstants.mediaDir = mediaDir;
     }
 }

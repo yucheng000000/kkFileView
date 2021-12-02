@@ -32,9 +32,18 @@ public class DownloadUtils {
      * @return 本地文件绝对路径
      */
     public static ReturnResponse<String> downLoad(FileAttribute fileAttribute, String fileName) {
+        return downLoad(fileAttribute,fileName,fileDir);
+    }
+
+    /**
+     * @param fileAttribute fileAttribute
+     * @param fileName      文件名
+     * @return 本地文件绝对路径
+     */
+    public static ReturnResponse<String> downLoad(FileAttribute fileAttribute, String fileName,String fileDir) {
         String urlStr = fileAttribute.getUrl().replaceAll("\\+", "%20");
         ReturnResponse<String> response = new ReturnResponse<>(0, "下载成功!!!", "");
-        String realPath = DownloadUtils.getRelFilePath(fileName, fileAttribute);
+        String realPath = DownloadUtils.getRelFilePath(fileName, fileAttribute,fileDir);
         try {
             URL url = WebUtils.normalizedURL(urlStr);
             if (isHttpUrl(url)) {
@@ -66,13 +75,14 @@ public class DownloadUtils {
     }
 
 
+
     /**
      * 获取真实文件绝对路径
      *
      * @param fileName 文件名
      * @return 文件路径
      */
-    private static String getRelFilePath(String fileName, FileAttribute fileAttribute) {
+    private static String getRelFilePath(String fileName, FileAttribute fileAttribute,String fileDir) {
         String type = fileAttribute.getSuffix();
         if (null == fileName) {
             UUID uuid = UUID.randomUUID();
