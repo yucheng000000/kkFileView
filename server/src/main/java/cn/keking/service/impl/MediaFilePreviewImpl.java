@@ -3,6 +3,7 @@ package cn.keking.service.impl;
 import cn.keking.config.ConfigConstants;
 import cn.keking.model.FileAttribute;
 import cn.keking.model.FileType;
+import cn.keking.model.M3U8Speed;
 import cn.keking.model.ReturnResponse;
 import cn.keking.service.FileHandlerService;
 import cn.keking.service.FilePreview;
@@ -38,7 +39,7 @@ public class MediaFilePreviewImpl implements FilePreview {
     private static Object LOCK=new Object();
     private static final Logger logger = LoggerFactory.getLogger(MediaFilePreviewImpl.class);
 
-    private static final Map<String,String> covertMap = new ConcurrentHashMap<>();
+    private static final Map<String, M3U8Speed> covertMap =new ConcurrentHashMap<>();
 
     public MediaFilePreviewImpl(FileHandlerService fileHandlerService, OtherFilePreviewImpl otherFilePreview) {
         this.fileHandlerService = fileHandlerService;
@@ -59,7 +60,7 @@ public class MediaFilePreviewImpl implements FilePreview {
         }
 
         if(checkNeedConvert(fileAttribute.getSuffix())){
-            url=convertUrl(fileAttribute);
+            url=convertUrl(fileAttribute,model);
             model.addAttribute("mediaUrl", url);
             return MEDIA4M3U8_FILE_PREVIEW_PAGE;
         }else{
@@ -76,29 +77,87 @@ public class MediaFilePreviewImpl implements FilePreview {
 
     }
 
+    private void getTsSize(M3U8Speed m3U8Speed) {
+        File file = new File(m3U8Speed.getSourceDir());
+        long total = 0;
+        File[] files = file.listFiles();
+        if(files.length>0){
+            for (File f : files) {
+                if(f.getName().endsWith(".ts")){
+                    total += f.length();
+                }
+            }
+        }
+        m3U8Speed.setTargetSize(total);
+    }
+
     /**
      * 检查视频文件处理逻辑
      * 返回处理过后的url
      * @return url
      */
-    private String convertUrl(FileAttribute fileAttribute) {
+    private String convertUrl(FileAttribute fileAttribute, Model model) {
         String url = fileAttribute.getUrl();
         url = getUrl(url);
         if(fileHandlerService.listConvertedMedias().containsKey(url)){
-            url= fileHandlerService.getConvertedMedias(url);
-        }else{
+            return fileHandlerService.getConvertedMedias(url);
+        }else {
             // 串行改并行
-            if(covertMap.get(url) != null){
-                covertMap.put(url,url);
-                String convertedUrl=convertToM3U8(fileAttribute);
+            // 没有转码
+            if (covertMap.get(url) == null){
+                synchronized (covertMap){
+                    if (covertMap.get(url) == null){
+                        covertMap.put(url,new M3U8Speed());
+                    }else {
+                        // 正在转码
+                        logger.info("获取已转码文件大小");
+                        getTsSize(covertMap.get(url));
+                        model.addAttribute("m3u8Speed", covertMap.get(url));
+                        return "0";
+                    }
+                }
+                // 没有转码，开启转码任务
+                logger.info("开始转码：{}",url);
+                new Thread(new ConvertTask(fileAttribute, url, fileHandlerService))
+                        .start();
+                model.addAttribute("m3u8Speed", new M3U8Speed());
+                return "0";
+            }
+            logger.info("获取已转码文件大小");
+            getTsSize(covertMap.get(url));
+            model.addAttribute("m3u8Speed", covertMap.get(url));
+            return "0";
+        }
+    }
+
+    static class ConvertTask implements Runnable {
+
+        private final Logger logger = LoggerFactory.getLogger(ConvertTask.class);
+        private final FileAttribute fileAttribute;
+        private final String url;
+        private final FileHandlerService fileHandlerService;
+
+        public ConvertTask(FileAttribute fileAttribute,
+                           String url,
+                           FileHandlerService fileHandlerService) {
+            this.fileAttribute = fileAttribute;
+            this.url = url;
+            this.fileHandlerService = fileHandlerService;
+        }
+
+        @Override
+        public void run() {
+            if (!fileHandlerService.listConvertedMedias().containsKey(url)) {
+                String convertedUrl = convertToM3U8(fileAttribute,url);
                 // 加入缓存
-                fileHandlerService.addConvertedMedias(url,convertedUrl);
-                url=convertedUrl;
+                fileHandlerService.addConvertedMedias(url, convertedUrl);
                 covertMap.remove(url);
+                logger.info("视频转码任务结束：{}",url);
             }
         }
-        return url;
+
     }
+
 
     private static String getUrl(String url){
         if(url.contains("group")&&url.contains("M00")){
@@ -139,9 +198,10 @@ public class MediaFilePreviewImpl implements FilePreview {
     /**
      * 将浏览器不兼容视频格式转换成M3U8
      * @param fileAttribute
+     * @param url
      * @return
      */
-    private static String convertToM3U8(FileAttribute fileAttribute) {
+    private static String convertToM3U8(FileAttribute fileAttribute, String url) {
 
         //说明：这里做临时处理，取上传文件的目录
         UUID uuid = UUID.randomUUID();
@@ -153,6 +213,9 @@ public class MediaFilePreviewImpl implements FilePreview {
         String convertFileName=(ConfigConstants.getMediaUrl()+uuid+File.separator+name).replace(fileAttribute.getSuffix(),"m3u8");
         logger.info("convertFileName:{}",convertFileName);
         File file=new File(filePath);
+        // 源文件大小
+        covertMap.get(url).setSourceSize(file.length());
+
         FFmpegFrameGrabber frameGrabber = new FFmpegFrameGrabber(file);
         String fileName = null;
         Frame captured_frame = null;
@@ -161,6 +224,7 @@ public class MediaFilePreviewImpl implements FilePreview {
         try {
             fileName = file.getAbsolutePath().replace("."+fileAttribute.getSuffix(),File.separator+uuid+".m3u8");
             dirName = file.getAbsolutePath().replace("."+fileAttribute.getSuffix(),"");
+            covertMap.get(url).setSourceDir(dirName);
             logger.info("dirName:{}",dirName);
             logger.info("fileName:{}",fileName);
             File desFile=new File(fileName);
@@ -181,7 +245,6 @@ public class MediaFilePreviewImpl implements FilePreview {
             recorder.setFrameRate(frameGrabber.getFrameRate());
             //recorder.setSampleFormat(frameGrabber.getSampleFormat()); //
             recorder.setSampleRate(frameGrabber.getSampleRate());
-
             recorder.setAudioChannels(frameGrabber.getAudioChannels());
             recorder.setFrameRate(frameGrabber.getFrameRate());
             recorder.start();

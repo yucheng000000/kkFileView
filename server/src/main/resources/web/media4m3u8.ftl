@@ -21,23 +21,40 @@
             margin: 0 auto;
 
         }
+        .center {
+            padding: 70px 0;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+<#if mediaUrl == "0">
+ <div class="center"><p id="p" style="color: aliceblue;" >首次预览，正在转码中</p></div>
+<#else>
 <div class="m">
     <video id="my_video_1" class="video-js vjs-default-skin" controls preload="auto"
            data-setup='{}'>
         <source src="${mediaUrl}" type="application/x-mpegURL">
     </video>
-
-    <script>
-
-    </script>
 </div>
+ </#if>
 <script>
-    // plyr.setup();
     window.onload = function () {
         initWaterMark();
+        if("0" === "${mediaUrl}"){
+            var p = $("#p");
+            p.append(GetPercent(${m3u8Speed.targetSize?c},${m3u8Speed.sourceSize?c}))
+            setTimeout("window.location.reload()",5000)
+            setInterval(function(){ p.append(".");},1000);
+        }
+    }
+    function GetPercent(num, total) {
+        num = parseFloat(num);
+        total = parseFloat(total);
+        if (isNaN(num) || isNaN(total)) {
+            return "-";
+        }
+        return total <= 0 ? "0%" : (Math.round(num / total * 10000) / 100.00)+"%";
     }
 </script>
 </body>
