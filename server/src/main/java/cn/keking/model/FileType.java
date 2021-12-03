@@ -21,7 +21,8 @@ public enum FileType {
     MEDIA("mediaFilePreviewImpl"),
     MARKDOWN("markdownFilePreviewImpl"),
     XML("xmlFilePreviewImpl"),
-    FLV("flvFilePreviewImpl"),
+//    FLV("flvFilePreviewImpl"),
+    FLV("mediaFilePreviewImpl"),
     CAD("cadFilePreviewImpl"),
     TIFF("tiffFilePreviewImpl"),
     OFD("ofdFilePreviewImpl");

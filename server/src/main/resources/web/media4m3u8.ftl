@@ -17,13 +17,17 @@
         }
 
         .m {
-            width: 1024px;
-            margin: 0 auto;
-
+            margin: auto;
+            width: 50%;
+            height: 700px;
+            padding: 20px;
         }
         .center {
             padding: 70px 0;
             text-align: center;
+            margin: auto;
+            width: 50%;
+            padding: 20px;
         }
     </style>
 </head>
@@ -31,12 +35,10 @@
 <#if mediaUrl == "0">
  <div class="center"><p id="p" style="color: aliceblue;" >首次预览，正在转码中</p></div>
 <#else>
-<div class="m">
-    <video id="my_video_1" class="video-js vjs-default-skin" controls preload="auto"
+    <video id="my_video_1"  class="video-js vjs-default-skin vjs-big-play-centered m" controls preload="auto"
            data-setup='{}'>
         <source src="${mediaUrl}" type="application/x-mpegURL">
     </video>
-</div>
  </#if>
 <script>
     window.onload = function () {
