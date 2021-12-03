@@ -3,11 +3,11 @@ package cn.keking.service.impl;
 import cn.keking.config.ConfigConstants;
 import cn.keking.model.FileAttribute;
 import cn.keking.model.FileType;
-import cn.keking.model.M3U8Speed;
 import cn.keking.model.ReturnResponse;
 import cn.keking.service.FileHandlerService;
 import cn.keking.service.FilePreview;
 import cn.keking.utils.DownloadUtils;
+import cn.keking.utils.MediaConvertUtil;
 import cn.keking.web.filter.BaseUrlFilter;
 import org.artofsolving.jodconverter.util.ConfigUtils;
 import org.bytedeco.ffmpeg.global.avcodec;
@@ -20,9 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
 import java.io.File;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author : kl
@@ -39,7 +37,7 @@ public class MediaFilePreviewImpl implements FilePreview {
     private static Object LOCK=new Object();
     private static final Logger logger = LoggerFactory.getLogger(MediaFilePreviewImpl.class);
 
-    private static final Map<String, M3U8Speed> covertMap =new ConcurrentHashMap<>();
+
 
     public MediaFilePreviewImpl(FileHandlerService fileHandlerService, OtherFilePreviewImpl otherFilePreview) {
         this.fileHandlerService = fileHandlerService;
@@ -60,9 +58,10 @@ public class MediaFilePreviewImpl implements FilePreview {
         }
 
         if(checkNeedConvert(fileAttribute.getSuffix())){
-            model.addAttribute("m3u8Speed", new M3U8Speed());
+            model.addAttribute("m3u8Speed", 0);
             url=convertUrl(fileAttribute,model);
             model.addAttribute("mediaUrl", url);
+            model.addAttribute("fileName",fileAttribute.getName());
             return MEDIA4M3U8_FILE_PREVIEW_PAGE;
         }else{
             //正常media类型
@@ -78,20 +77,6 @@ public class MediaFilePreviewImpl implements FilePreview {
 
     }
 
-    private void getTsSize(M3U8Speed m3U8Speed) {
-        File file = new File(m3U8Speed.getSourceDir());
-        long total = 0;
-        File[] files = file.listFiles();
-        if(files.length>0){
-            for (File f : files) {
-                if(f.getName().endsWith(".ts")){
-                    total += f.length();
-                }
-            }
-        }
-        m3U8Speed.setTargetSize(total);
-    }
-
     /**
      * 检查视频文件处理逻辑
      * 返回处理过后的url
@@ -105,15 +90,14 @@ public class MediaFilePreviewImpl implements FilePreview {
         }else {
             // 串行改并行
             // 没有转码
-            if (covertMap.get(url) == null){
-                synchronized (covertMap){
-                    if (covertMap.get(url) == null){
-                        covertMap.put(url,new M3U8Speed());
+            if (MediaConvertUtil.covertMap.get(url) == null){
+                synchronized (MediaConvertUtil.covertMap){
+                    if (MediaConvertUtil.covertMap.get(url) == null){
+                        MediaConvertUtil.covertMap.put(url,0);
                     }else {
                         // 正在转码
                         logger.info("获取已转码文件大小");
-                        getTsSize(covertMap.get(url));
-                        model.addAttribute("m3u8Speed", covertMap.get(url));
+                        model.addAttribute("m3u8Speed", MediaConvertUtil.covertMap.get(url));
                         return "0";
                     }
                 }
@@ -123,9 +107,8 @@ public class MediaFilePreviewImpl implements FilePreview {
                         .start();
                 return "0";
             }
-            logger.info("获取已转码文件大小");
-            getTsSize(covertMap.get(url));
-            model.addAttribute("m3u8Speed", covertMap.get(url));
+            logger.info("获取已转码文件大小11");
+            model.addAttribute("m3u8Speed", MediaConvertUtil.covertMap.get(url));
             return "0";
         }
     }
@@ -151,7 +134,7 @@ public class MediaFilePreviewImpl implements FilePreview {
                 String convertedUrl = convertToM3U8(fileAttribute,url);
                 // 加入缓存
                 fileHandlerService.addConvertedMedias(url, convertedUrl);
-                covertMap.remove(url);
+                MediaConvertUtil.covertMap.remove(url);
                 logger.info("视频转码任务结束：{}",url);
             }
         }
@@ -209,56 +192,32 @@ public class MediaFilePreviewImpl implements FilePreview {
         logger.info("name:{}",name);
         // 下载至media目录
         ReturnResponse<String> stringReturnResponse = DownloadUtils.downLoad(fileAttribute, name, ConfigConstants.getMediaDir());
-        String filePath = stringReturnResponse.getContent();
-        logger.info("filePath:{}",filePath);
+        String sourceFilePath = stringReturnResponse.getContent();
+        logger.info("sourceFilePath:{}",sourceFilePath);
         String convertFileName=(ConfigConstants.getMediaUrl()+uuid+File.separator+name).replace(fileAttribute.getSuffix(),"m3u8");
         logger.info("convertFileName:{}",convertFileName);
-        File file=new File(filePath);
+        File file=new File(sourceFilePath);
         // 源文件大小
-        covertMap.get(url).setSourceSize(file.length());
-
-        FFmpegFrameGrabber frameGrabber = new FFmpegFrameGrabber(file);
-        String fileName = null;
-        Frame captured_frame = null;
-        FFmpegFrameRecorder recorder = null;
+        String tarFileName = null;
         String dirName = null;
         try {
-            fileName = file.getAbsolutePath().replace("."+fileAttribute.getSuffix(),File.separator+uuid+".m3u8");
+            tarFileName = file.getAbsolutePath().replace("."+fileAttribute.getSuffix(),File.separator+uuid+".m3u8");
             dirName = file.getAbsolutePath().replace("."+fileAttribute.getSuffix(),"");
-            covertMap.get(url).setSourceDir(dirName);
             logger.info("dirName:{}",dirName);
-            logger.info("fileName:{}",fileName);
-            File desFile=new File(fileName);
+            logger.info("tarFileName:{}",tarFileName);
+            File desFile=new File(tarFileName);
             File dirFile = new File(dirName);
             //判断一下防止穿透缓存
             if(dirFile.exists()){
-                return fileName;
+                return tarFileName;
             }else {
                 dirFile.mkdir();
             }
             if(desFile.exists()){
-                return fileName;
+                return tarFileName;
             }
-            frameGrabber.start();
-            recorder = new FFmpegFrameRecorder(fileName, frameGrabber.getImageWidth(), frameGrabber.getImageHeight(), frameGrabber.getAudioChannels());
-            recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264); //avcodec.AV_CODEC_ID_H264  //AV_CODEC_ID_MPEG4
-            recorder.setFormat("m3u8");
-            recorder.setFrameRate(frameGrabber.getFrameRate());
-            //recorder.setSampleFormat(frameGrabber.getSampleFormat()); //
-            recorder.setSampleRate(frameGrabber.getSampleRate());
-            recorder.setAudioChannels(frameGrabber.getAudioChannels());
-            recorder.setFrameRate(frameGrabber.getFrameRate());
-            recorder.start();
-            while ((captured_frame = frameGrabber.grabFrame()) != null) {
-                try {
-                    recorder.setTimestamp(frameGrabber.getTimestamp());
-                    recorder.record(captured_frame);
-                } catch (Exception e) {
-                }
-            }
-            recorder.stop();
-            recorder.release();
-            frameGrabber.stop();
+            MediaConvertUtil.processM3U8(sourceFilePath,tarFileName,url);
+
         } catch (Exception e) {
             e.printStackTrace();
         }finally {

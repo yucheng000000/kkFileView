@@ -41,6 +41,7 @@ public class ConfigConstants {
     private static String officeUrl;
     private static String mediaUrl;
     private static String mediaDir;
+    private static String ffmpegPath;
 
     public static final String DEFAULT_CACHE_ENABLED = "true";
     public static final String DEFAULT_TXT_TYPE = "txt,html,htm,asp,jsp,xml,json,properties,md,gitignore,log,java,py,c,cpp,sql,sh,bat,m,bas,prg,cmd";
@@ -327,5 +328,17 @@ public class ConfigConstants {
 
     public static void setMediaDirValue(String mediaDir) {
         ConfigConstants.mediaDir = mediaDir;
+    }
+
+    public static String getFfmpegPath() {
+        return ffmpegPath;
+    }
+    @Value("${ffmpeg.path:default}")
+    public void setFfmpegPath(String ffmpegPath) {
+        setFfmpegPathValue(ffmpegPath);
+    }
+
+    public static void setFfmpegPathValue(String ffmpegPath) {
+        ConfigConstants.ffmpegPath = ffmpegPath;
     }
 }

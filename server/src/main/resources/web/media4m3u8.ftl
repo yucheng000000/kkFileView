@@ -18,7 +18,8 @@
 
         .m {
             margin: auto;
-            width: 50%;
+            margin-top: 2%;
+            width: 60%;
             height: 700px;
             padding: 20px;
         }
@@ -33,8 +34,12 @@
 </head>
 <body>
 <#if mediaUrl == "0">
- <div class="center"><p id="p" style="color: aliceblue;" >首次预览，正在转码中</p></div>
+ <div class="center">
+     <p id="p" style="color: aliceblue;" >首次预览，正在转码中</p>
+     <p id="p" style="color: aliceblue;" >进度缓慢可关闭此页面，等待后台转码完成再点开预览</p>
+ </div>
 <#else>
+    <p id="p" class="center" style="color: aliceblue;" >${fileName}</p>
     <video id="my_video_1"  class="video-js vjs-default-skin vjs-big-play-centered m" controls preload="auto"
            data-setup='{}'>
         <source src="${mediaUrl}" type="application/x-mpegURL">
@@ -45,18 +50,10 @@
         initWaterMark();
         if("0" === "${mediaUrl}"){
             var p = $("#p");
-            p.append(GetPercent(${m3u8Speed.targetSize?c},${m3u8Speed.sourceSize?c}))
+            p.append("${m3u8Speed}"+"%")
             setTimeout("window.location.reload()",5000)
             setInterval(function(){ p.append(".");},1000);
         }
-    }
-    function GetPercent(num, total) {
-        num = parseFloat(num);
-        total = parseFloat(total);
-        if (isNaN(num) || isNaN(total)) {
-            return "-";
-        }
-        return total <= 0 ? "0%" : (Math.round(num / total * 10000) / 100.00)+"%";
     }
 </script>
 </body>
