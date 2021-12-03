@@ -20,9 +20,11 @@ public class MediaConvertUtil {
     Logger log = LoggerFactory.getLogger(MediaConvertUtil.class);
 
     public static final Map<String, Integer> covertMap;
+    public static final Map<String, String> covertPreviewUrlMap;
 
     static {
         covertMap =new ConcurrentHashMap<>();
+        covertPreviewUrlMap =new ConcurrentHashMap<>();
     }
 
     // ffmpeg能解析的格式：（asx，asf，mpg，wmv，3gp，mp4，mov，avi，flv等）
