@@ -59,7 +59,6 @@ public class MediaFilePreviewImpl implements FilePreview {
 
         if(checkNeedConvert(fileAttribute.getSuffix())){
             model.addAttribute("m3u8Speed", 0);
-            model.addAttribute("m3u8SpeedPreviewUrl", "0");
             url=convertUrl(fileAttribute,model);
             model.addAttribute("mediaUrl", url);
             model.addAttribute("fileName",fileAttribute.getName());
@@ -98,7 +97,6 @@ public class MediaFilePreviewImpl implements FilePreview {
                     }else {
                         // 正在转码
                         model.addAttribute("m3u8Speed", MediaConvertUtil.covertMap.get(url));
-                        model.addAttribute("m3u8SpeedPreviewUrl", MediaConvertUtil.covertPreviewUrlMap.get(url));
                         return "0";
                     }
                 }
@@ -109,7 +107,6 @@ public class MediaFilePreviewImpl implements FilePreview {
                 return "0";
             }
             model.addAttribute("m3u8Speed", MediaConvertUtil.covertMap.get(url));
-            model.addAttribute("m3u8SpeedPreviewUrl", MediaConvertUtil.covertPreviewUrlMap.get(url));
             return "0";
         }
     }
@@ -196,7 +193,6 @@ public class MediaFilePreviewImpl implements FilePreview {
         String sourceFilePath = stringReturnResponse.getContent();
         logger.info("sourceFilePath:{}",sourceFilePath);
         String convertFileName=(ConfigConstants.getMediaUrl()+uuid+File.separator+name).replace(fileAttribute.getSuffix(),"m3u8");
-        MediaConvertUtil.covertPreviewUrlMap.put(url,convertFileName);
         logger.info("convertFileName:{}",convertFileName);
         File file=new File(sourceFilePath);
         // 源文件大小

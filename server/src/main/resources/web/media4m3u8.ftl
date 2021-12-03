@@ -30,16 +30,16 @@
             width: 50%;
             padding: 20px;
         }
+        p {
+            color: aliceblue;
+        }
     </style>
 </head>
 <body>
 <#if mediaUrl == "0">
  <div class="center">
-     <p id="p" style="color: aliceblue;" >首次预览，正在转码中</p>
-     <#if m3u8SpeedPreviewUrl != "0">
-     <p><a id="preview">点此</a> 预览已转码文件</p>
-     </#if>
-     <p id="p" style="color: aliceblue;" >进度缓慢可关闭此页面，等待后台转码完成再点开预览</p>
+     <p id="p" >首次预览，正在转码中</p>
+     <p >进度缓慢可关闭此页面，等待后台转码完成再点开预览</p>
  </div>
 <#else>
     <p id="p" class="center" style="color: aliceblue;" >${fileName}</p>
@@ -58,10 +58,7 @@
             setInterval(function(){ p.append(".");},1000);
         }
     }
-    $("#preview").click(function(){
-        var previewUrl = '${m3u8SpeedPreviewUrl}';
-        window.href=window.location.protocol+window.location.host+window.location.port+window.location.pathname+"?url=" + encodeURIComponent(Base64.encode(previewUrl)) + "watermarkTxt=" + '${watermarkTxt}';
-    });
+
 </script>
 </body>
 </html>
